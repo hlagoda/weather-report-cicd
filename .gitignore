@@ -1,0 +1,15 @@
+# temp files
+temp.txt
+
+# keys and secrets
+keys/
+*.pem 
+
+# Ansible and Terraform artifacts
+*.retry
+*.log
+*.tfstate
+*.tfstate.*
+.terraform/
+workspace/
+inventory

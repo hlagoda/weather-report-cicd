@@ -1,0 +1,55 @@
+---
+
+- name: Run terraform
+  block:
+  - name: 10 - Create terraform template
+    template:
+      src: main.j2
+      dest: "{{ playbook_dir }}/workspace/main.tf"
+
+  - name: 20 - Format main.tf
+    command: terraform -chdir="{{ playbook_dir }}/workspace" fmt
+
+  - name: 30 - Initialize terraform
+    command: terraform -chdir="{{ playbook_dir }}/workspace" init
+
+  - name: 40 - Validate terraform
+    command: terraform -chdir="{{ playbook_dir }}/workspace" validate
+    
+  - name: 50 - Set var
+    set_fact:
+      ANSIBLE_STDOUT_CALLBACK: debug 
+
+  - name: 60 - Terraform plan
+    command: terraform -chdir="{{ playbook_dir }}/workspace" plan -out={{ project.name | lower }}-plan.out
+
+  - name: 70 - Terraform plan show
+    command: terraform -chdir="{{ playbook_dir }}/workspace" show {{ project.name | lower }}-plan.out
+    register: terraform_plan
+
+  - name: 80 - Print plan
+    debug:
+      msg: "{{ terraform_plan.stdout }}"
+
+  - name: 90 - Terraform apply
+    command: terraform -chdir="{{ playbook_dir }}/workspace" apply -auto-approve {{ project.name | lower }}-plan.out
+    register: terraform_apply
+
+  - name: 100 - Print apply
+    debug:
+      msg: "{{ terraform_apply.stdout }}"
+    
+  - name: 110 - Terraform output
+    command: terraform -chdir="{{ playbook_dir }}/workspace" output instance_private_ip
+    register: instance_private_ip
+    
+  - name: 120 - Print instance private ip
+    debug:
+      msg: "Instance private ip = {{ instance_private_ip.stdout }}"
+
+  - name: 130 - Create inventory
+    template:
+      src: inventory.j2
+      dest: "{{ playbook_dir }}/workspace/inventory"
+    
+  

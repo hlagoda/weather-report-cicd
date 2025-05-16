@@ -1,0 +1,38 @@
+provider "aws" {
+    region = "{{ oroject.aws.region }}"
+
+    default_tags {
+        tags = {
+            "Name" = "{{ project.name }}"
+        }
+    }
+}
+
+
+{% if project.aws.create_s3 %} 
+
+resource "aws_s3_bucket" "{{ project.name | lower }}-s3-bucket" {
+    bucket = "{{ project.name | lower }}-s3-bucket" 
+}
+
+{% endif %}
+
+resource "aws_instance" "{{ project.name | lower }}-instance" {
+    ami = "{{ project.aws.ami_id }}"
+    instance_type = "{{ project.aws.ec2_instance_type }}"
+    vpc_security_group_ids = ["{{ project.aws.security_group }}"]
+    
+    subnet_id = "{{ project.aws.subnet_id }}"
+
+    root_block_device { 
+        volume_size = "{{ project.aws.storage }}"
+        volume_type = "{{ project.aws.storage_type }}"
+    }
+
+    key_name = "{{ project.aws.key_name }}"
+
+}
+
+output "instance_private_ip" {
+  value = aws_instance.{{ project.name | lower }}-instance.private_ip
+}
