@@ -1,18 +1,18 @@
 project:
-    name: "{{ project_params.project_name}}"
-    private_ip: "{{ project_params.project_priv_ip}}"
+    name: "{{ project_params.PROJECT_NAME}}"
+    private_ip: "{{ project_params.PROJECT_PRIV_IP}}"
 
     jenkins:
-        user: "{{ project_params.jenkins_user}}"
-        pass: "{{ project_params.jenkins_pass}}"
+        user: "{{ project_params.JENKINS_USER}}"
+        pass: "{{ project_params.JENKINS_PASS}}"
     
     aws:
-        region: "{{ project_params.aws_region}}"
-        create_s3: "{{ project_params.create_s3}}"
-        ec2_instance_type: "{{ project_params.ec2_instance_type}}"
-        ami_id: "{{ project_params.aws_ami_id}}"
-        security_group: "{{ project_params.security_group}}"
-        subnet_id: "{{ project_params.subnet_id}}"
-        storage: "{{ project_params.aws_storage}}"
-        storage_type: "{{ project_params.aws_storage_type}}"
-        key_name: "{{ project_params.key_name}}"
+        region: "{{ project_params.AWS_REGION}}"
+        create_s3: "{{ project_params.CREATE_S3}}"
+        ec2_instance_type: "{{ project_params.EC2_INSTANCE_TYPE}}"
+        ami_id: "{{ project_params.AWS_AMI_ID}}"
+        security_group: "{{ project_params.SECURITY_GROUP}}"
+        subnet_id: "{{ project_params.SUBNET_ID}}"
+        storage: "{{ project_params.AWS_STORAGE}}"
+        storage_type: "{{ project_params.AWS_STORAGE_TYPE}}"
+        key_name: "{{ project_params.KEY_NAME}}"

@@ -11,5 +11,4 @@ keys/
 *.tfstate
 *.tfstate.*
 .terraform/
-workspace/
 inventory

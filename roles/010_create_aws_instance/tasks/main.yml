@@ -5,7 +5,7 @@
   - name: 10 - Create terraform template
     template:
       src: main.j2
-      dest: "{{ playbook_dir }}/workspace/main.tf"
+      dest: "{{ playbook_dir }}/workspace/{{ project.name | lower }}.tf"
 
   - name: 20 - Format main.tf
     command: terraform -chdir="{{ playbook_dir }}/workspace" fmt

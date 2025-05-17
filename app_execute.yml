@@ -5,35 +5,43 @@
   any_errors_fatal: true
 
   tasks:
-    - name: 10 - Print project properties file name
-      msg:
-        debug: Project property file = {{ project_properties_file }}
+    - name: 30 - Print project properties file name
+      debug:
+        msg: Project property file = {{ project_properties_file }}
+
+    - name: 40 - Include project properties
+      include_vars:
+        file: "{{ project_properties_file }}"
+        name: project_params
+
+    - name: 10 - Generate properties file
+      template:
+        src: vars_template.j2
+        dest: "{{ playbook_dir }}/workspace/vars.yml"
 
     - name: 20 - Include project properties
       include_vars:
-        file: {{ project_properties_file }}
-        name: project_params
+        file: "{{ playbook_dir }}/workspace/vars.yml"
+    
+    - name: 30 - Print project name
+      debug:
+        msg: "Project name: {{ project.name }}"
 
-    - name: 30 - Check if jenkins is running
+    - name: 50 - Check if jenkins is running
       uri:
-        url: "http://{{ project_params.project_priv_ip }}:8080"
+        url: "http://{{ project.private_ip }}:8080"
         method: GET
-        user: {{ project_params.jenkins_user }}
-        password: {{ project_params.jenkins_pass }}
+        user: "{{ project.jenkins.user }}"
+        password: "{{ project.jenkins.pass }}"
         force_basic_auth: true
         status_code: 200
       register: jenkins_status
       ignore_errors: true
       
-    - name: 40 - Fail if jenkins is not running
+    - name: 60 - Fail if jenkins is not running
       fail:
         msg: Jenkins is not running
       when: jenkins_status.status != 200
-
-    - name: 50 - Generate properties file
-      template:
-        src: vars_template.j2
-        dest: "{{ playbook_dir }}/workspace/vars.yml"
         
   tags: ['app_init', 'full']
 
@@ -52,8 +60,8 @@
 
   tags: ['create_aws_instance', 'full']
 
-- name: C - Install components
-  hosts: "{{ project.name | lower }}-instance"
-  any_errors_fatal: true
+# - name: C - Install components
+#   hosts: "{{ project.name | lower }}-instance"
+#   any_errors_fatal: true
 
   
