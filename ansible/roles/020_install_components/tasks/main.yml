@@ -29,39 +29,45 @@
       become: true
       when: aws_cli_version.rc != 0
 
-    - name: 60 - Install Docker Engine
+    - name: 60 - Install JDK
+      ansible.builtin.dnf:
+        name: java-11-openjdk-devel
+        state: present
+      become: true
+
+    - name: 70 - Install Docker Engine
       dnf:
         name: docker
         state: present
       become: true
 
-    - name: 70 - Install Docker SDK for Python (for Ansible)
+    - name: 80 - Install Docker SDK for Python (for Ansible)
       pip:
         name: docker
         executable: pip3
         state: present
       become: true
 
-    - name: 80 - Install Docker Compose from github repo
+    - name: 90 - Install Docker Compose from github repo
       get_url:
         url: "{{ docker_compose_url }}"
         dest: /usr/local/bin/docker-compose
         mode: '0755'
       become: true
 
-    - name: 90 - Create a symbolic link
+    - name: 100 - Create a symbolic link
       file:
         src: /usr/local/bin/docker-compose
         dest: /usr/bin/docker-compose
         state: link
       become: true
 
-    - name: 100 - Reload systemd configuration
+    - name: 110 - Reload systemd configuration
       systemd:
         daemon_reload: yes
       become: true
 
-    - name: 110 - Enable and start Docker services
+    - name: 120 - Enable and start Docker services
       ansible.builtin.service:
         name: docker
         state: started
