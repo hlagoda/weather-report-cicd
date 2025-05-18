@@ -11,23 +11,7 @@
         
   tags: ['install_components', 'full']
 
-- name: B - Configure Jenkins
-  hosts: aws
-  any_errors_fatal: true
-
-  tasks:
-    - name: 10 - Include secret vars
-      include_vars:
-        file: "{{ playbook_dir }}/vars/secret_vars.yml"
-
-    - name: 20 - Run configure jenkins role
-      include_role:
-        name: 030_configure_jenkins
-
-  tags: ['configure_jenkins', 'full']
-
-
-- name: C - Deploy Docker containers
+- name: B - Deploy Docker containers
   hosts: aws 
   any_errors_fatal: true
 

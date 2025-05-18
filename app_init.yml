@@ -60,5 +60,20 @@
 
   tags: ['create_aws_instance', 'full']
 
+- name: C - Configure Jenkins
+  hosts: aws
+  any_errors_fatal: true
+
+  tasks:
+    - name: 10 - Include secret vars
+      include_vars:
+        file: "{{ playbook_dir }}/vars/secret_vars.yml"
+
+    - name: 20 - Run configure jenkins role
+      include_role:
+        name: 030_configure_jenkins
+
+  tags: ['configure_jenkins']
+
 
   
