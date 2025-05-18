@@ -12,3 +12,4 @@ keys/
 *.tfstate.*
 .terraform/
 inventory
+tests/*

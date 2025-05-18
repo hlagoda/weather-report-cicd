@@ -50,6 +50,6 @@
   - name: 130 - Create inventory
     template:
       src: inventory.j2
-      dest: "{{ playbook_dir }}/workspace/inventory"
+      dest: "{{ playbook_dir }}/workspace/inventory.yml"
     
   

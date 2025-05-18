@@ -1,67 +1,24 @@
 ---
 
-- name: A - Initialize application
-  hosts: localhost
+- name: A - Install components
+  hosts: aws 
   any_errors_fatal: true
 
   tasks:
-    - name: 30 - Print project properties file name
-      debug:
-        msg: Project property file = {{ project_properties_file }}
-
-    - name: 40 - Include project properties
-      include_vars:
-        file: "{{ project_properties_file }}"
-        name: project_params
-
-    - name: 10 - Generate properties file
-      template:
-        src: vars_template.j2
-        dest: "{{ playbook_dir }}/workspace/vars.yml"
-
-    - name: 20 - Include project properties
-      include_vars:
-        file: "{{ playbook_dir }}/workspace/vars.yml"
-    
-    - name: 30 - Print project name
-      debug:
-        msg: "Project name: {{ project.name }}"
-
-    - name: 50 - Check if jenkins is running
-      uri:
-        url: "http://{{ project.private_ip }}:8080"
-        method: GET
-        user: "{{ project.jenkins.user }}"
-        password: "{{ project.jenkins.pass }}"
-        force_basic_auth: true
-        status_code: 200
-      register: jenkins_status
-      ignore_errors: true
-      
-    - name: 60 - Fail if jenkins is not running
-      fail:
-        msg: Jenkins is not running
-      when: jenkins_status.status != 200
+    - name: 10 - Run install components role
+      include_role:
+        name: 020_install_components
         
-  tags: ['app_init', 'full']
+  tags: ['install_components', 'full']
 
-- name: B - Create AWS instance + inventory
-  hosts: localhost
+
+- name: B - Deploy Docker containers
+  hosts: aws 
   any_errors_fatal: true
 
   tasks:
-    - name: 10 - Include project properties
-      include_vars:
-        file: "{{ playbook_dir }}/workspace/vars.yml"
-      
-    - name: 20 - Execute 010_create_aws_instance 
-      include_role: 
-        name: 010_create_aws_instance
+    - name: 10 - Run deploy docker role
+      include_role:
+        name: 030_deploy_docker
 
-  tags: ['create_aws_instance', 'full']
-
-# - name: C - Install components
-#   hosts: "{{ project.name | lower }}-instance"
-#   any_errors_fatal: true
-
-  
+  tags: ['deploy_docker', 'full']

@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: weatherdb
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: weatherdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  flask_app:
+    build: ./flask_app
+    container_name: flask_app
+    ports:
+      - "5000:5000"
+  
+  fetch_app:
+    build: ./fetch_app
+    container_name: fetch_app
+    
+  report_app:
+    build: ./report_app
+    container_name: report_app
+    volumes:
+      - report_data:/app
+
+  send_report:
+    build: ./send_report
+    container_name: send_report
+    volumes:
+      - report_data:/app
+
+    
+    

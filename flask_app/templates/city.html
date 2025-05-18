@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ city|capitalize }} Weather Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <h1>Weather Details for {{ city|capitalize }}</h1>
+    <h3>Current Weather</h3>
+    <table class="table table-bordered">
+        <tr><th>Temperature (°C)</th><td>{{ current.main.temp }}</td></tr>
+        <tr><th>Weather</th><td>{{ current.weather[0].main }} - {{ current.weather[0].description }}</td></tr>
+        <tr><th>Pressure (hPa)</th><td>{{ current.main.pressure }}</td></tr>
+        <tr><th>Humidity (%)</th><td>{{ current.main.humidity }}</td></tr>
+        <tr><th>Wind Speed (m/s)</th><td>{{ current.wind.speed }}</td></tr>
+        <tr><th>Feels Like (°C)</th><td>{{ current.main.feels_like }}</td></tr>
+        <tr><th>Current Local Time</th><td>{{ (current.dt | datetimeformat(current.timezone)) }}</td></tr>
+        <tr><th>Sunrise (UTC)</th><td>{{ current.sys.sunrise | datetimeformat }}</td></tr>
+        <tr><th>Sunset (UTC)</th><td>{{ current.sys.sunset | datetimeformat }}</td></tr>
+    </table>
+
+    <h3>Forecast</h3>
+    <table class="table table-bordered table-sm">
+        <thead>
+            <tr>
+                <th>Date/Time</th>
+                <th>Temp (°C)</th>
+                <th>Weather</th>
+                <th>Pressure</th>
+                <th>Humidity</th>
+                <th>Wind Speed</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for entry in forecast %}
+            <tr>
+                <td>{{ entry.dt_txt or entry.dt | default('') }}</td>
+                <td>{{ entry.main.temp }}</td>
+                <td>{{ entry.weather[0].main }}</td>
+                <td>{{ entry.main.pressure }}</td>
+                <td>{{ entry.main.humidity }}</td>
+                <td>{{ entry.wind.speed }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">Back to Main</a>
+</div>
+</body>
+</html>
