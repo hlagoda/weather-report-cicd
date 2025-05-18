@@ -1,0 +1,42 @@
+jenkins:
+  systemMessage: "Jenkins configured as code for Weather Report Project!"
+  numExecutors: 2
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "${JENKINS_ADMIN_PASSWORD}" # Set this env variable securely
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+unclassified:
+  location:
+    url: "http://localhost:8080/"
+  ansiColorMapName: "xterm"
+
+jobs:
+  - script: >
+      pipelineJob('deploy_pipeline') {
+        definition {
+          cps {
+            script(readFileFromWorkspace('jenkins/deploy_pipeline.groovy'))
+            sandbox(true)
+          }
+        }
+      }
+  - script: >
+      pipelineJob('run_fetcher') {
+        definition {
+          cps {
+            script(readFileFromWorkspace('jenkins/run_fetcher.groovy'))
+            sandbox(true)
+          }
+        }
+        triggers {
+          cron('H * * * *') // Run every hour
+        }
+      }
