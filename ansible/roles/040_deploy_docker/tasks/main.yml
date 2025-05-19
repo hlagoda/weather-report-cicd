@@ -23,6 +23,6 @@
 
     - name: 20 - Deploy docker
       community.docker.docker_compose_v2:
-        compose_file: /home/{{ ansible_user }}/docker-compose.yml
+        compose_file: ../docker-compose.yml
         state: present
       become: true
