@@ -7,7 +7,7 @@
   tasks:
     - name: 10 - Run install components role
       include_role:
-        name: 020_install_components
+        name: "020_install_components"
         
   tags: ['install_components', 'full']
 
@@ -18,6 +18,6 @@
   tasks:
     - name: 10 - Run deploy docker role
       include_role:
-        name: 040_deploy_docker
+        name: "040_deploy_docker"
 
   tags: ['deploy_docker', 'full']

@@ -22,6 +22,9 @@
 
   - name: 60 - Terraform plan
     command: terraform -chdir="{{ playbook_dir }}/workspace" plan -out={{ project.name | lower }}-plan.out
+    environment:
+      AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+      AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
 
   - name: 70 - Terraform plan show
     command: terraform -chdir="{{ playbook_dir }}/workspace" show {{ project.name | lower }}-plan.out
@@ -33,6 +36,9 @@
 
   - name: 90 - Terraform apply
     command: terraform -chdir="{{ playbook_dir }}/workspace" apply -auto-approve {{ project.name | lower }}-plan.out
+    environment:
+      AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+      AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
     register: terraform_apply
 
   - name: 100 - Print apply

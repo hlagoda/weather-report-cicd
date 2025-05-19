@@ -6,7 +6,7 @@ JENKINS_PASS: "password"
 
 AWS_REGION: "eu-west-1"
 CREATE_S3: true
-AWS_AMI_ID: "ami-0c55b159cbfafe1f0"
+AWS_AMI_ID: "ami-04e7764922e1e3a57"
 EC2_INSTANCE_TYPE: "t3.small"
 SECURITY_GROUP: "sg-0af40bcf927d202e0"
 SUBNET_ID: "subnet-02be7d92464c46e8a"
