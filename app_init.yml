@@ -16,7 +16,7 @@
 
     - name: 10 - Generate properties file
       template:
-        src: vars_template.j2
+        src: ansible/templates/vars_template.j2
         dest: "{{ playbook_dir }}/workspace/vars.yml"
 
     - name: 20 - Include project properties
@@ -53,10 +53,14 @@
     - name: 10 - Include project properties
       include_vars:
         file: "{{ playbook_dir }}/workspace/vars.yml"
+
+    - name: 20 - Include project properties
+      include_vars:
+        file: "{{ playbook_dir }}/ansible/vars/secret_vars.yml"
       
-    - name: 20 - Execute 010_create_aws_instance 
+    - name: 30 - Execute 010_create_aws_instance 
       include_role: 
-        name: 010_create_aws_instance
+        name: "010_create_aws_instance"
 
   tags: ['create_aws_instance', 'full']
 
@@ -65,13 +69,17 @@
   any_errors_fatal: true
 
   tasks:
-    - name: 10 - Include secret vars
+    - name: 10 - Include project properties
       include_vars:
-        file: "{{ playbook_dir }}/vars/secret_vars.yml"
+        file: "{{ playbook_dir }}/workspace/vars.yml"
+
+    - name: 20 - Include secret vars
+      include_vars:
+        file: "{{ playbook_dir }}/ansible/vars/secret_vars.yml"
 
     - name: 20 - Run configure jenkins role
       include_role:
-        name: 030_configure_jenkins
+        name: "030_configure_jenkins"
 
   tags: ['configure_jenkins']
 

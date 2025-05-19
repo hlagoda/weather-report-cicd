@@ -6,9 +6,41 @@
       include_vars:
         file: "{{ playbook_dir }}/workspace/vars.yml"
 
+    - name: Template Jenkins JCasC file
+      template:
+        src: jenkins/jenkins.yml.j2
+        dest: /var/lib/jenkins/jenkins.yml
+      become: true
+    
+    - name: Reload Jenkins JCasC configuration
+      uri:
+        url: "http://localhost:8080/configuration-as-code/reload"
+        method: POST
+        user: "{{ project.jenkins.user }}"
+        password: "{{ project.jenkins.pass }}"
+        force_basic_auth: yes
+        status_code: 200
+      delegate_to: localhost
+
+    - name: Wait for Jenkins agent secret file to exist
+      wait_for:
+        path: "/var/lib/jenkins/secrets/slave-to-{{ project.name }}-secret"
+        state: present
+        timeout: 120
+      delegate_to: localhost
+
+    - name: Read Jenkins agent secret from master
+      ansible.builtin.slurp:
+        src: "/var/lib/jenkins/secrets/slave-to-{{ project.name }}-secret"
+      delegate_to: localhost
+      register: agent_secret_file
+
+    - set_fact:
+        jenkins_agent_secret: "{{ agent_secret_file['content'] | b64decode | trim }}"
+
     - name: 20 - Download Jenkins agent.jar from master
       ansible.builtin.get_url:
-        url: "http://{{ jenkins_master_ip }}:8080/jnlpJars/agent.jar"
+        url: "http://{{ project.private_ip }}:8080/jnlpJars/agent.jar"
         dest: "/home/{{ ansible_user }}/agent.jar"
         mode: '0755'
     
