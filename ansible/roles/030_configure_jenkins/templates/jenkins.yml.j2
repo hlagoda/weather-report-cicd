@@ -15,12 +15,15 @@ jenkins:
 
   nodes:
     - permanent:
-        name: "{{ project.name }}"
-        remoteFS: "/home/jenkins"
-        numExecutors: 1
-        labelString: "linux"
+        name: "{{ project.name }}-agent"
+        remoteFS: "/opt/jenkins"
+        labels: "app-vm"
         launcher:
-          jnlp: {}
+          inbound: {}
+        numExecutors: 1
+        mode: "NORMAL"
+        retentionStrategy:
+          always: {}
 
 unclassified:
   location:
@@ -32,7 +35,7 @@ jobs:
       pipelineJob('deploy_pipeline') {
         definition {
           cps {
-            script(readFileFromWorkspace('jenkins/deploy_pipeline.groovy'))
+            script(readFileFromWorkspace('{{ playbook_dir }}/jenkins/deploy_pipeline.groovy'))
             sandbox(true)
           }
         }
