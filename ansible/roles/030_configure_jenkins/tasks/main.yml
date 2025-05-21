@@ -23,9 +23,21 @@
       become: true
 
     - name: 40 - Create jenkins.yml
-      template: jenkins.yml.j2
-      dest: /var/lib/jenkins/jenkins.yml
+      template:
+        src: jenkins.yml.j2
+        dest: /var/lib/jenkins/jenkins.yml
+        owner: jenkins
+        group: jenkins
+        mode: '0644'
+      delegate_to: localhost
       become: true
+
+    - name: Restart Jenkins to reload configuration
+      ansible.builtin.service:
+        name: jenkins
+        state: restarted
+      become: true
+      delegate_to: localhost
 
     - name: 50 - Wait for Jenkins to generate agent secret
       wait_for:

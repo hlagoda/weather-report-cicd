@@ -17,9 +17,9 @@ jenkins:
     - permanent:
         name: "{{ project.name }}-agent"
         remoteFS: "/opt/jenkins"
-        labels: "app-vm"
+        labelString: "app-vm"
         launcher:
-          inbound: {}
+          jnlp: {}
         numExecutors: 1
         mode: "NORMAL"
         retentionStrategy:
@@ -31,24 +31,67 @@ unclassified:
   ansiColorMapName: "xterm"
 
 jobs:
-  - script: >
+  - script: |
       pipelineJob('deploy_pipeline') {
         definition {
           cps {
-            script(readFileFromWorkspace('{{ playbook_dir }}/jenkins/deploy_pipeline.groovy'))
+            script("""
+              pipeline{
+                  agent any
+                  options {
+                      ansiColor('xterm')
+                  }
+                  stages {
+                      stage('Install components') {
+                          steps {
+                              sh 'ansible-playbook -i inventory.yml app_execute.yml -t install_components'
+                          }
+                      }
+                      stage('Deploy Docker containers') {
+                          steps {
+                              sh 'ansible-playbook -i inventory.yml app_execute.yml -t deploy_docker'
+                          }
+                      }
+                  }
+              }
+            """)
             sandbox(true)
           }
         }
       }
-  - script: >
+  - script: |
       pipelineJob('run_fetcher') {
         definition {
           cps {
-            script(readFileFromWorkspace('jenkins/run_fetcher.groovy'))
+            script("""
+              pipeline{
+                  agent any
+                  options {
+                      ansiColor('xterm')
+                  }
+                  stages {
+                      stage('Fetch the data') {
+                          steps {
+                              sh 'docker-compose run --rm fetch_app'
+                          }
+                      }
+                      stage('Create report') {
+                          steps {
+                              sh 'docker-compose run --rm report_app'
+                          }
+                      }
+                      stage('Send report to S3') {
+                          steps {
+                              sh 'docker-compose run --rm send_report'
+                          }
+                      }
+                  }
+                  triggers {
+                      cron('H * * * *')
+                  }
+              }
+            """)
             sandbox(true)
           }
-        }
-        triggers {
-          cron('H * * * *') // Run every hour
         }
       }

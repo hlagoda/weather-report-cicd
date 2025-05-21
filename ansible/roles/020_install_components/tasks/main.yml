@@ -16,6 +16,32 @@
         state: present
       become: true
 
+    # - name: Remove python3-urllib3 (to repair broken RPM)
+    #   ansible.builtin.dnf:
+    #     name: python3-urllib3
+    #     state: absent
+    #   become: true
+
+    - name: Install python3-urllib3
+      pip:
+        name: urllib3
+        executable: pip3
+        state: present
+      become: true
+
+    - name: Install boto3
+      pip:
+        name: boto3
+        executable: pip3
+        state: present
+      become: true
+
+    # - name: Remove awscli (to repair broken RPM)
+    #   ansible.builtin.dnf:
+    #     name: awscli
+    #     state: absent
+    #   become: true
+
     - name: 40 - Check if AWS CLI is preinstalled
       ansible.builtin.command:
         cmd: aws --version
@@ -29,14 +55,8 @@
       become: true
       when: aws_cli_version.rc != 0
 
-    - name: 60 - Install JDK
-      ansible.builtin.dnf:
-        name: java-11-openjdk-devel
-        state: present
-      become: true
-
     - name: 70 - Install Docker Engine
-      dnf:
+      ansible.builtin.dnf:
         name: docker
         state: present
       become: true
@@ -46,18 +66,33 @@
         name: docker
         executable: pip3
         state: present
+        extra_args: --ignore-installed
       become: true
 
-    - name: 90 - Install Docker Compose from github repo
-      get_url:
-        url: "{{ docker_compose_url }}"
-        dest: /usr/local/bin/docker-compose
+    - name: Creates directory
+      ansible.builtin.file:
+        path: /usr/local/lib/docker/cli-plugins/
+        state: directory
         mode: '0755'
+      become: true
+
+    - name: Download Docker Compose plugin binary
+      ansible.builtin.get_url:
+        url: "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64"
+        dest: /usr/local/lib/docker/cli-plugins/docker-compose
+        mode: '0755'
+      become: true
+
+    - name: Ensure docker-compose is executable
+      ansible.builtin.file:
+        path: /usr/local/lib/docker/cli-plugins/docker-compose
+        mode: '0755'
+        state: file
       become: true
 
     - name: 100 - Create a symbolic link
       file:
-        src: /usr/local/bin/docker-compose
+        src: /usr/local/lib/docker/cli-plugins/docker-compose
         dest: /usr/bin/docker-compose
         state: link
       become: true
