@@ -7,7 +7,7 @@ jenkins:
       allowsSignup: false
       users:
         - id: "admin"
-          password: "{{ project.jenkins.pass }}"
+          password: "{{ project_jenkins_pass }}"
 
   authorizationStrategy:
     loggedInUsersCanDoAnything:
@@ -15,7 +15,7 @@ jenkins:
 
   nodes:
     - permanent:
-        name: "{{ project.name }}-agent"
+        name: "{{ project_name }}-agent"
         remoteFS: "/opt/jenkins"
         labelString: "app-vm"
         launcher:
@@ -27,7 +27,7 @@ jenkins:
 
 unclassified:
   location:
-    url: "http://localhost:8080/"
+    url: "http://{{ project.private_ip }}:8080/"
   ansiColorMapName: "xterm"
 
 jobs:

@@ -3,7 +3,8 @@ Description=Jenkins Agent (JNLP)
 After=network.target
 
 [Service]
-User=ubuntu
+User=ec2-user
+Group=ec2-user
 WorkingDirectory=/opt/jenkins
 ExecStart=/usr/bin/java -jar /opt/jenkins/agent.jar \
   -jnlpUrl http://{{ project.private_ip }}:8080/computer/{{ project.name }}-agent/slave-agent.jnlp \

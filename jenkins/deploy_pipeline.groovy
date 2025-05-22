@@ -6,14 +6,9 @@ pipeline{
     }
 
     stages {
-        stage('Install components') {
+        stage('Build & Deploy') {
             steps {
-                sh 'ansible-playbook -i inventory.yml app_execute.yml -t install_components'
-            }
-        }
-        stage('Deploy Docker containers') {
-            steps {
-                sh 'ansible-playbook -i inventory.yml app_execute.yml -t deploy_docker'
+                sh 'docker-compose up -d'
             }
         }
     }

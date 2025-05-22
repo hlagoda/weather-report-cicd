@@ -1,0 +1,24 @@
+---
+
+- name: Add files
+  block:        
+    - name: 10 - Move docker-compose.yml
+      synchronize:
+        src: "{{ playbook_dir }}/docker-compose.yml"
+        dest: /opt/jenkins/docker-compose.yml
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: 20 - Move files
+      synchronize:
+        src: "{{ playbook_dir }}/{{ item }}/"
+        dest: /opt/jenkins/{{ item }}/ 
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+      with_items:
+        - "flask_app"
+        - "fetch_app"
+        - "db_postgres"
+        - "create_report_app"
+        
+      
