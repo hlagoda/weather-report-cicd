@@ -81,7 +81,7 @@
       include_role:
         name: "030_configure_jenkins"
 
-  tags: ['configure_jenkins']
+  tags: ['configure_jenkins', 'full']
 
 - name: D - Install components
   hosts: aws 
@@ -102,6 +102,8 @@
     - name: 10 - Run add files role
       include_role:
         name: "040_add_files"
+
+  tags: ['add_files', 'full']
 
 
   
