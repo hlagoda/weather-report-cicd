@@ -1,6 +1,7 @@
 import os
 import requests
 import psycopg2
+import time
 from datetime import datetime, timedelta
 
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
@@ -26,13 +27,20 @@ CITY_COORDS = {
 }
 
 def get_db_connection():
-    return psycopg2.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        dbname=DB_NAME
-    )
+    max_attempts = 10
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return psycopg2.connect(
+                host=DB_HOST,
+                port=DB_PORT,
+                user=DB_USER,
+                password=DB_PASSWORD,
+                dbname=DB_NAME
+            )
+        except psycopg2.OperationalError as e:
+            print(f"Attempt {attempt}/{max_attempts}: Database not ready, waiting 2 seconds...")
+            time.sleep(2)
+    raise Exception(f"Could not connect to the database after {max_attempts} attempts.")
 
 def fetch_city_weather(city):
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
@@ -60,12 +68,29 @@ def fetch_city_forecast(city):
     return [daily[k] for k in sorted(daily.keys())]
 
 def insert_current_weather(conn, city, data):
+    print('inserted_current_weather')
+    print(f'{city} {data['main']['temp']}')
     with conn.cursor() as cur:
+        # 1. Query for the existing row
+        cur.execute('SELECT city, timezone_offset, temp, feels_like, temp_min, temp_max, weather_main, weather_description, pressure, humidity, wind_speed, sunrise, sunset, created_at FROM weather.current WHERE city = %s', (city,))
+        existing = cur.fetchone()
+        if existing:
+            # 2. Insert the existing row into weather.history
+            cur.execute(
+                '''
+                INSERT INTO weather.history
+                (city, timezone_offset, temp, feels_like, temp_min, temp_max, weather_main, weather_description,
+                 pressure, humidity, wind_speed, sunrise, sunset, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ''',
+                existing
+            )
+        # 3. Upsert into weather.current
         cur.execute(
             '''
             INSERT INTO weather.current
             (city, timezone_offset, temp, feels_like, temp_min, temp_max, weather_main, weather_description,
-             pressure, humidity, wind_speed, sunrise, sunset, current_time)
+             pressure, humidity, wind_speed, sunrise, sunset, created_at)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, to_timestamp(%s), to_timestamp(%s), to_timestamp(%s))
             ON CONFLICT (city) DO UPDATE SET
                 timezone_offset=EXCLUDED.timezone_offset,
@@ -80,11 +105,11 @@ def insert_current_weather(conn, city, data):
                 wind_speed=EXCLUDED.wind_speed,
                 sunrise=EXCLUDED.sunrise,
                 sunset=EXCLUDED.sunset,
-                current_time=EXCLUDED.current_time
+                created_at=EXCLUDED.created_at
             ''',
             (
                 city,
-                data['timezone'],
+                data.get('timezone', 0),
                 data['main']['temp'],
                 data['main']['feels_like'],
                 data['main']['temp_min'],
