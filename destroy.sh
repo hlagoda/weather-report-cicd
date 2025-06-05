@@ -7,4 +7,4 @@ if [[ "$#" == 0 ]]; then
     exit 1
 fi
 
-terraform -chdir=./workspace/{PROJECT_NAME} destroy -auto-approve
+terraform -chdir=./workspace destroy -auto-approve
