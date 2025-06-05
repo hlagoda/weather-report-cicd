@@ -141,3 +141,13 @@
         enabled: true
       become: true
       
+    - name: 110 - Wait for Jenkins agent to be ready
+      wait_for:
+        host: "{{ project.private_ip }}"
+        port: 8080
+        timeout: 60
+      delegate_to: localhost
+
+    - name: 120 - run jenkins build tasks
+      include_tasks:
+        file: jenkins_build.yml
