@@ -64,46 +64,5 @@
 
   tags: ['create_aws_instance', 'full']
 
-- name: C - Configure Jenkins
-  hosts: aws
-  any_errors_fatal: true
-
-  tasks:
-    - name: 10 - Include project properties
-      include_vars:
-        file: "{{ playbook_dir }}/workspace/vars.yml"
-
-    - name: 20 - Include secret vars
-      include_vars:
-        file: "{{ playbook_dir }}/ansible/vars/secret_vars.yml"
-
-    - name: 30 - Run configure jenkins role
-      include_role:
-        name: "030_configure_jenkins"
-
-  tags: ['configure_jenkins', 'full']
-
-- name: D - Install components
-  hosts: aws 
-  any_errors_fatal: true
-
-  tasks:
-    - name: 10 - Run install components role
-      include_role:
-        name: "030_install_components"
-        
-  tags: ['install_components', 'full']
-
-- name: E - Add files to app vm 
-  hosts: aws
-  any_errors_fatal: true
-
-  tasks:
-    - name: 10 - Run add files role
-      include_role:
-        name: "040_add_files"
-
-  tags: ['add_files', 'full']
-
 
   
