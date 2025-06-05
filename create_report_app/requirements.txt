@@ -1,3 +1,0 @@
-reportlab
-psycopg2
-matplotlib
