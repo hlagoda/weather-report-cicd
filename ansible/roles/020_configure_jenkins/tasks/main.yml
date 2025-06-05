@@ -82,15 +82,14 @@
         return_content: yes
       delegate_to: localhost
       register: crumb_response
+      retries: 20  
+      delay: 10  
+      until: crumb_response.status == 200
 
     - name: Parse Jenkins crumb
       set_fact:
         jenkins_crumb: "{{ crumb_response.json.crumb }}"
         jenkins_crumb_field: "{{ crumb_response.json.crumbRequestField }}"
-
-    - name: aa 
-      debug:
-        msg: "Crumb field: {{ jenkins_crumb_field }}, Crumb: {{ jenkins_crumb }}"
 
     - name: Get agent config JSON (including secret)
       uri:
@@ -99,6 +98,7 @@
         password: "{{ project.jenkins.pass }}"
         # headers:
         #   "{{ jenkins_crumb_field }}": "{{ jenkins_crumb }}"
+        force_basic_auth: yes
         return_content: yes
       delegate_to: localhost
       register: agent_jnlp_response
@@ -125,7 +125,7 @@
         src: jenkins-agent.service.j2
         dest: /etc/systemd/system/jenkins-agent.service
         mode: '0644'
-        become: true
+      become: true
       vars:
         jenkins_agent_secret: "{{ jenkins_agent_secret }}"
 
@@ -140,7 +140,4 @@
         state: started
         enabled: true
       become: true
-
-    - name: 130 - Add files
-      include_tasks: add_files.yml
       
