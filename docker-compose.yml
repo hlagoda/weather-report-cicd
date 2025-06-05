@@ -9,13 +9,16 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db_postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   fetch_app:
     build: ./fetch_app
     container_name: fetch_app
     depends_on:
       - db
+    environment:
+      - OPENWEATHER_API_KEY
+      - DB_HOST=db
 
   flask_app:
     build: ./flask_app
@@ -24,22 +27,31 @@ services:
       - "5000:5000"
     depends_on:
       - db
+    environment:
+      - DB_HOST=db
     
   report_app:
     build: ./report_app
     container_name: report_app
     volumes:
-      - report_data:/app
+      - ./output:/app/output
     depends_on:
       - db
+    environment:
+      - DB_HOST=db
 
   send_report:
     build: ./send_report
     container_name: send_report
     volumes:
-      - report_data:/app
+      - ./output:/app/output
     depends_on:
       - db
+    environment:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_REGION
+      - S3_BUCKET
 
-    
-    
+volumes:
+  report_data:
