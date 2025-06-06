@@ -1,0 +1,35 @@
+#!/bin/bash
+
+JENKINS_URL=http://{{ project.private_ip }}:8080/
+HOST={{ project.private_ip }}
+NODE_NAME={{ project.name }}-agent
+NODE_SLAVE_HOME='/home/ec2-user'
+EXECUTORS=8
+SSH_PORT=22
+CRED_ID={{ cred_id }}
+LABELS={{ project.name }}
+USERID=ec2-user
+
+cat <<EOF | {{project.vars.nr_java_home}}/bin/java -jar {{ jenkins_location }}/jenkins-cli.jar -s ${JENKINS_URL} -auth {{ project.jenkins.user }}:{{ project.jenkins.pass }} create-node ${NODE_NAME}
+<slave>
+  <name>${NODE_NAME}</name>
+  <description>This agent is used to run the pipeline</description>
+  <remoteFS>${NODE_SLAVE_HOME}</remoteFS>
+  <numExecutors>${EXECUTORS}</numExecutors>
+  <mode>EXCLUSIVE</mode>
+  <retentionStrategy class="hudson.slaves.RetentionStrategy$Always"/>
+  <launcher class="hudson.plugins.sshslaves.SSHLauncher" plugin="ssh-slaves@1.5">
+    <host>${HOST}</host>
+    <port>${SSH_PORT}</port>
+    <credentialsId>${CRED_ID}</credentialsId>
+    <javaPath>{{project.vars.nr_java_home}}/bin/java</javaPath>
+    <launchTimeoutSeconds>60</launchTimeoutSeconds>
+    <maxNumRetries>10</maxNumRetries>
+    <retryWaitTime>15</retryWaitTime>
+    <sshHostKeyVerificationStrategy class="hudson.plugins.sshslaves.verifiers.NonVerifyingKeyVerificationStrategy"/>
+  </launcher>
+  <label>${LABELS}</label>
+  <nodeProperties/>
+  <userId>${USERID}</userId>
+</slave>
+EOF

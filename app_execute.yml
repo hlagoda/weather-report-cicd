@@ -1,7 +1,7 @@
 ---
 
 - name: A - Configure Jenkins
-  hosts: aws
+  hosts: localhost
   any_errors_fatal: true
 
   tasks:

@@ -1,0 +1,83 @@
+---
+
+- name: Run Jenkins jobs
+  block:
+    - name: set variables 
+      set_fact:
+        jenkins_url: "http://{{ project.private_ip }}:8080"
+        deploy_pipeline: "deploy_pipeline"
+
+    - name: 10 - Include project properties
+      include_vars:
+        file: "{{ playbook_dir }}/workspace/vars.yml"
+
+    - name: get crumb 
+      uri:
+        url: "{{ jenkins_url }}/crumbIssuer/api/json"
+        user: "{{ project.jenkins.user }}"
+        password: "{{ project.jenkins.pass }}"
+        force_basic_auth: yes
+        status_code: 200
+      register: jenkins_crumb
+
+    - name: start deploy pipeline
+      uri:
+        url: "{{ jenkins_url }}/job/{{ deploy_pipeline }}/build"
+        method: POST
+        user: "{{ project.jenkins.user }}"
+        password: "{{ project.jenkins.pass }}"
+        validate_certs: false
+        return_content: yes
+        status_code: 201
+        headers:
+          Jenkins-Crumb: "{{ jenkins_crumb.json.crumb }}"
+        force_basic_auth: yes
+      register: result 
+
+    - name: 30 - query jenkins job queue to see if the build started
+      block:
+        - name: 30a - poll jenkins JOB QUEUE to see if the build started 
+          uri:
+            url: "{{ jenkins_url }}/queue/api/json"
+            force_basic_auth: true
+            validate_certs: false
+            method: GET
+            user: "{{ project.jenkins.user }}"
+            password: "{{ project.jenkins.pass }}"
+            return_content: true
+            timeout: 3
+          register: queue_response
+          until: queue_response|json_query('json.executable.number')|default(0)|int > 0
+          retries: 20
+          delay: 2
+      rescue:
+        - name: 30b - fail if build did not start 
+          fail:
+            msg: "Error, could not query the jenkins job queue"
+
+    - name: 40 - Checking if jenkins job is running
+      uri:
+        url: "{{ jenkins_url }}/job/{{ deploy_pipeline }}/queue_response.json.executable.number/api/json"
+        force_basic_auth: true
+        validate_certs: false
+        method: GET
+        user: "{{ project.jenkins.user }}"
+        password: "{{ project.jenkins.pass }}"
+        return_content: true
+        timeout: 3
+      register: job_response
+      until: job_response|json_query('json.building')|bool == false
+      retries: 100
+      delay: 30
+
+    - name: 50 - Build job FAILED or ABORTED 
+      fail: 
+        msg: "Build job FAILED"
+      when: 
+        job_response|json_query('json.result') in ['FAILURE', 'ABORTED']
+    
+    - name: 60 - Build job SUCCESS
+      debug:
+        msg: "Build job SUCCESSFUL"
+      when: 
+        job_response|json_query('json.result') not in ['FAILURE', 'ABORTED']

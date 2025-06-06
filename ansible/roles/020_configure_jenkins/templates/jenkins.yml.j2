@@ -2,12 +2,6 @@ jenkins:
   systemMessage: "Jenkins configured as code for Weather Report Project!"
   numExecutors: 2
 
-  securityRealm:
-    local:
-      allowsSignup: false
-      users:
-        - id: "admin"
-          password: "{{ project_jenkins_pass }}"
 
   authorizationStrategy:
     loggedInUsersCanDoAnything:

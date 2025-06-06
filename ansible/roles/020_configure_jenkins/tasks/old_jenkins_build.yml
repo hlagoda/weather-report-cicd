@@ -6,16 +6,32 @@
       include_vars:
         file: "{{ playbook_dir }}/workspace/vars.yml"
 
-    - name: 20 - start jenkins pipeline 
+    - name: 20 - Include secret vars
+      include_vars:
+        file: "{{ playbook_dir }}/ansible/vars/secret_vars.yml"
+
+    - name: Get Jenkins crumb
       uri:
-        url: "http://{{ project.private_ip }}:8080/job/deploy_pipeline/build"
-        method: POST 
-        validate_certs: false
+        url: "http://{{ project.private_ip }}:8080/crumbIssuer/api/json"
         user: "{{ project.jenkins.user }}"
-        password: "{{ project.jenkins.pass }}"
-        force_basic_auth: true
+        password: "{{ jenkins_token }}"
+        force_basic_auth: yes
+        return_content: yes
+      register: jenkins_crumb
+      delegate_to: localhost
+
+    - name: Start Jenkins pipeline
+      uri:
+        url: "http://{{ project.private_ip }}:8080/job/deploy_pipeline/build?delay=0sec"
+        method: POST
+        user: "{{ project.jenkins.user }}"
+        password: "{{ jenkins_token }}"
+        headers: "{{ {jenkins_crumb.json.crumbRequestField: jenkins_crumb.json.crumb} }}"
+        force_basic_auth: yes
+        return_content: yes
         status_code: 201
-      register: result 
+      delegate_to: localhost
+      register: result
 
     - name: 30 - query jenkins job queue to see if the build started
       block:
@@ -26,7 +42,7 @@
             validate_certs: false
             method: GET
             user: "{{ project.jenkins.user }}"
-            password: "{{ project.jenkins.pass }}"
+            password: "{{ jenkins_token }}"
             return_content: true
             timeout: 3
           register: queue_response
@@ -45,7 +61,7 @@
         validate_certs: false
         method: GET
         user: "{{ project.jenkins.user }}"
-        password: "{{ project.jenkins.pass }}"
+        password: "{{ jenkins_token }}"
         return_content: true
         timeout: 3
       register: job_response
