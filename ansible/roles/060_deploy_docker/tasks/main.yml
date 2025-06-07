@@ -1,0 +1,20 @@
+---
+
+- name: Deploy docker
+  block:
+    - name: 10 - Include project properties
+      include_vars:
+        file: "{{ playbook_dir }}/workspace/vars.yml"
+
+    - name: 20 - Pull latest Docker images
+      community.docker.docker_compose_v2:
+        project_src: "{{ project.project_path }}"
+        state: present
+        pull: always
+      become: true
+
+    - name: 30 - Deploy docker
+      community.docker.docker_compose_v2:
+        project_src: "{{ project.project_path }}"
+        state: present
+      become: true
