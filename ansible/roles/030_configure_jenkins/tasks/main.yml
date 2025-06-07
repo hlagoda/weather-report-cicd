@@ -6,76 +6,12 @@
       include_vars:
         file: "{{ playbook_dir }}/workspace/vars.yml"
 
-    - name: 20 - Install JDK
-      ansible.builtin.dnf:
-        name: java-17-amazon-corretto
-        state: present
-      become: true
+    - name: 20 - set variables 
+      set_fact:
+        jenkins_location: '/var/lib/jenkins'
 
-    - name: 30 - Create Jenkins directory
-      file:
-        path: /opt/jenkins
-        state: directory
-        owner: ec2-user
-        group: ec2-user
-        recurse: yes
-        mode: '0755'
-      become: true
+    - name: 30 - prepare jenkins 
+      include_tasks: prepare_jenkins.yml
 
-    - name: 40 - Create jenkins.yml
-      template:
-        src: jenkins.yml.j2
-        dest: /var/lib/jenkins/jenkins.yml
-        owner: jenkins
-        group: jenkins
-        mode: '0644'
-      delegate_to: localhost
-      become: true
-
-    - name: Restart Jenkins to reload configuration
-      ansible.builtin.service:
-        name: jenkins
-        state: restarted
-      become: true
-      delegate_to: localhost
-
-    - name: 50 - Wait for Jenkins to generate agent secret
-      wait_for:
-        path: "/var/lib/jenkins/nodes/{{ project.name }}-agent/secret"
-        state: present
-        timeout: 30
-      delegate_to: localhost
-
-    - name: 60 - Read Jenkins agent secret
-      slurp:
-        src: "/var/lib/jenkins/nodes/{{ project.name }}-agent/secret"
-      delegate_to: localhost
-      register: agent_secret
-
-    - set_fact:
-        jenkins_agent_secret: "{{ agent_secret['content'] | b64decode }}"
-
-    - name: 70 - Download Jenkins agent jar
-      get_url:
-        url: http://{{ project.private_ip }}:8080/jnlpJars/agent.jar
-        dest: /opt/jenkins/agent.jar
-      become: true
-
-    - name: 80 - Create jenkins-agent.service
-      template:
-        src: jenkins-agent.service.j2
-        dest: /etc/systemd/system/jenkins-agent.service
-        mode: '0644'
-      become: true
-
-    - name: 90 - Reload systemd configuration
-      systemd:
-        daemon_reload: yes
-      become: true
-
-    - name: 100 - Enable and start Jenkins agent service
-      ansible.builtin.service:
-        name: jenkins-agent
-        state: started
-        enabled: true
-      become: true
+    - name: 40 - run jobs
+      include_tasks: run_jobs.yml

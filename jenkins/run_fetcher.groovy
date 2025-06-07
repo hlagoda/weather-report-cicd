@@ -1,29 +1,28 @@
-pipeline{
-    agent any
-
-    options {
-        ansiColor('xterm')
-    }
-
-    stages {
+def deploy() {
+    node('master') {
         stage('Fetch the data') {
-            steps {
-                sh 'docker-compose run --rm fetch_app'
+            dir('/opt/weather-report-cicd'){
+                sh '''
+                    ansible-playbook app_execute.yml \
+                      -t run_docker \
+                      --vault-password-file vault_pass.txt \
+                      --ssh-common-args="-o StrictHostKeyChecking=no" \
+                      -e "to_run=fetch_app"
+                    '''
+                }
             }
-        }
-        stage('Create report') {
-            steps {
-                sh 'docker-compose run --rm report_app'
-            }
-        }
         stage('Send report to S3') {
-            steps {
-                sh 'docker-compose run --rm send_report'
+            dir('/opt/weather-report-cicd'){
+                sh '''
+                ansible-playbook app_execute.yml \
+                  -t run_docker \
+                  --vault-password-file vault_pass.txt \
+                  --ssh-common-args="-o StrictHostKeyChecking=no" \
+                  -e "to_run=send_report"
+                '''
             }
         }
-    }
-
-    triggers {
-        cron('H * * * *') 
     }
 }
+
+return this

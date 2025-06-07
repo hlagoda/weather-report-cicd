@@ -7,17 +7,51 @@
   tasks:
     - name: 10 - Run install components role
       include_role:
-        name: "020_install_components"
+        name: "040_install_components"
         
   tags: ['install_components', 'full']
 
-- name: B - Deploy Docker containers
-  hosts: aws 
+- name: B - Add files to app vm 
+  hosts: aws
+  any_errors_fatal: true
+  vars_files:
+    - ansible/vars/secret_vars.yml
+
+  tasks:
+    - name: 10 - Include project properties
+      include_vars:
+        file: "{{ playbook_dir }}/workspace/vars.yml" 
+        
+    - name: 20 - Run add files role
+      include_role:
+        name: "050_add_files"
+
+  tags: ['add_files', 'full']
+
+- name: C - Deploy docker containers
+  hosts: aws
   any_errors_fatal: true
 
   tasks:
     - name: 10 - Run deploy docker role
       include_role:
-        name: "040_deploy_docker"
+        name: "060_deploy_docker"
 
   tags: ['deploy_docker', 'full']
+
+- name: D - Run docker containers
+  hosts: aws
+  any_errors_fatal: true
+  vars_files:
+    - ansible/vars/secret_vars.yml
+
+  tasks:
+    - name: 10 - Include project properties
+      include_vars:
+        file: "{{ playbook_dir }}/workspace/vars.yml"
+
+    - name: 20 - Run deploy docker role
+      include_role:
+        name: "070_run_docker"
+
+  tags: ['run_docker', 'full']

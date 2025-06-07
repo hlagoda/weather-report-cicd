@@ -1,0 +1,19 @@
+---
+
+- name: Initial components
+  block: 
+
+  - name: 10 - Install JDK
+    ansible.builtin.dnf:
+      name: java-17-amazon-corretto
+      state: present
+    become: true
+    
+  - name: 20 -Ensure /tmp has at least 2GB using tmpfs
+    ansible.posix.mount:
+      path: /tmp
+      src: tmpfs
+      fstype: tmpfs
+      opts: size=2g,mode=1777
+      state: mounted
+    become: true

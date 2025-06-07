@@ -10,15 +10,15 @@
     <h1>Weather Details for {{ city|capitalize }}</h1>
     <h3>Current Weather</h3>
     <table class="table table-bordered">
-        <tr><th>Temperature (°C)</th><td>{{ current.main.temp }}</td></tr>
-        <tr><th>Weather</th><td>{{ current.weather[0].main }} - {{ current.weather[0].description }}</td></tr>
-        <tr><th>Pressure (hPa)</th><td>{{ current.main.pressure }}</td></tr>
-        <tr><th>Humidity (%)</th><td>{{ current.main.humidity }}</td></tr>
-        <tr><th>Wind Speed (m/s)</th><td>{{ current.wind.speed }}</td></tr>
-        <tr><th>Feels Like (°C)</th><td>{{ current.main.feels_like }}</td></tr>
-        <tr><th>Current Local Time</th><td>{{ (current.dt | datetimeformat(current.timezone)) }}</td></tr>
-        <tr><th>Sunrise (UTC)</th><td>{{ current.sys.sunrise | datetimeformat }}</td></tr>
-        <tr><th>Sunset (UTC)</th><td>{{ current.sys.sunset | datetimeformat }}</td></tr>
+        <tr><th>Temperature (°C)</th><td>{{ current.temp }}</td></tr>
+        <tr><th>Weather</th><td>{{ current.weather_main }} - {{ current.weather_description }}</td></tr>
+        <tr><th>Pressure (hPa)</th><td>{{ current.pressure }}</td></tr>
+        <tr><th>Humidity (%)</th><td>{{ current.humidity }}</td></tr>
+        <tr><th>Wind Speed (m/s)</th><td>{{ current.wind_speed }}</td></tr>
+        <tr><th>Feels Like (°C)</th><td>{{ current.feels_like }}</td></tr>
+        <tr><th>Current Local Time</th><td>{{ (current.created_at | datetimeformat(current.timezone)) }}</td></tr>
+        <tr><th>Sunrise (Local Time)</th><td>{{ current.sunrise | datetimeformat(current.timezone_offset) }}</td></tr>
+<tr><th>Sunset (Local Time)</th><td>{{ current.sunset | datetimeformat(current.timezone_offset) }}</td></tr>
     </table>
 
     <h3>Forecast</h3>
@@ -36,16 +36,42 @@
         <tbody>
         {% for entry in forecast %}
             <tr>
-                <td>{{ entry.dt_txt or entry.dt | default('') }}</td>
-                <td>{{ entry.main.temp }}</td>
-                <td>{{ entry.weather[0].main }}</td>
-                <td>{{ entry.main.pressure }}</td>
-                <td>{{ entry.main.humidity }}</td>
-                <td>{{ entry.wind.speed }}</td>
+                <td>{{ entry.forecast_time | datetimeformat(entry.timezone_offset) }}</td>
+                <td>{{ entry.temp }}</td>
+                <td>{{ entry.weather_main }}</td>
+                <td>{{ entry.pressure }}</td>
+                <td>{{ entry.humidity }}</td>
+                <td>{{ entry.wind_speed }}</td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
+
+    {% if history and history|length > 0 %}
+    <h3>History</h3>
+    <table class="table table-bordered table-sm">
+        <thead>
+            <tr>
+                <th>Date/Time</th>
+                <th>Temp (°C)</th>
+                <th>Feels Like (°C)</th>
+                <th>Min (°C)</th>
+                <th>Max (°C)</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for entry in history %}
+            <tr>
+                <td>{{ entry.created_at | datetimeformat(entry.timezone_offset) }}</td>
+                <td>{{ entry.temp }}</td>
+                <td>{{ entry.feels_like }}</td>
+                <td>{{ entry.temp_min }}</td>
+                <td>{{ entry.temp_max }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
     <a href="{{ url_for('index') }}" class="btn btn-secondary">Back to Main</a>
 </div>
 </body>

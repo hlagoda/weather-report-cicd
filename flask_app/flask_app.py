@@ -5,15 +5,24 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
-
-def datetimeformat(value, timezone_offset=0, format='%Y-%m-%d %H:%M:%S'):
-    try:
-        # value: unix timestamp, timezone_offset: seconds
-        dt = datetime.utcfromtimestamp(int(value))
-        dt = dt + timedelta(seconds=timezone_offset)
-        return dt.strftime(format)
-    except Exception:
-        return value
+@app.template_filter('datetimeformat')
+def datetimeformat(value, tz_offset=0):
+    from datetime import datetime, timedelta
+    # Accepts a datetime, date, or string, applies tz_offset (seconds), returns formatted string without microseconds
+    if isinstance(value, str):
+        try:
+            value = datetime.fromisoformat(value)
+        except Exception:
+            try:
+                value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S.%f')
+            except Exception:
+                return value
+    if tz_offset:
+        try:
+            value = value + timedelta(seconds=int(tz_offset))
+        except Exception:
+            pass
+    return value.strftime('%Y-%m-%d %H:%M:%S')
 
 app.jinja_env.filters['datetimeformat'] = datetimeformat
 
@@ -21,11 +30,11 @@ DATA_FILE = os.path.join('flask_app', 'openweather_data.json')
 
 import psycopg2
 
-DB_HOST = os.environ.get('DB_HOST', 'db')
-DB_PORT = os.environ.get('DB_PORT', 5432)
-DB_USER = os.environ.get('DB_USER', 'postgres')
-DB_PASSWORD = os.environ.get('DB_PASSWORD', 'postgres')
-DB_NAME = os.environ.get('DB_NAME', 'weather')
+DB_HOST = os.getenv('DB_HOST', 'localhost')
+DB_PORT = os.getenv('DB_PORT', 5432)
+DB_USER = os.getenv('DB_USER', 'postgres')
+DB_PASSWORD = os.getenv('DB_PASSWORD', 'postgres')
+DB_NAME = os.getenv('DB_NAME', 'weatherdb')
 
 def load_weather_data():
     conn = psycopg2.connect(
@@ -36,10 +45,13 @@ def load_weather_data():
         dbname=DB_NAME
     )
     cur = conn.cursor()
-    cur.execute("SELECT city, timezone_offset, temp, feels_like, temp_min, temp_max, weather_main, weather_description, pressure, humidity, wind_speed, sunrise, sunset, current_time FROM weather.current")
+    cur.execute("SELECT city, timezone_offset, temp, feels_like, temp_min, temp_max, weather_main, weather_description, pressure, humidity, wind_speed, sunrise, sunset, created_at FROM weather.current")
     rows = cur.fetchall()
     columns = [desc[0] for desc in cur.description]
     data = [dict(zip(columns, row)) for row in rows]
+    # Alias timezone_offset as timezone for template compatibility
+    for row in data:
+        row['timezone'] = row.get('timezone_offset', 0)
     cur.close()
     conn.close()
     return data
@@ -78,6 +90,23 @@ def index():
         })
     return render_template('index.html', cities=table)
 
+def load_history_data(city):
+    conn = psycopg2.connect(
+        host=DB_HOST,
+        port=DB_PORT,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        dbname=DB_NAME
+    )
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM weather.history WHERE city = %s ORDER BY created_at DESC", (city,))
+    rows = cur.fetchall()
+    columns = [desc[0] for desc in cur.description]
+    data = [dict(zip(columns, row)) for row in rows]
+    cur.close()
+    conn.close()
+    return data
+
 @app.route('/city/<city>')
 def city_page(city):
     city = city.lower()
@@ -88,7 +117,10 @@ def city_page(city):
     current = current_list[0]
     # Get forecast for this city
     forecast = [row for row in load_forecast_data() if row['city'].lower() == city]
-    return render_template('city.html', city=city, current=current, forecast=forecast)
+    # Get history for this city
+    history = load_history_data(city)
+    return render_template('city.html', city=city, current=current, forecast=forecast, history=history)
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')

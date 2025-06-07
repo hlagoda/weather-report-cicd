@@ -1,0 +1,59 @@
+---
+
+- name: Run Jenkins jobs
+  block:
+    - name: 10 - set variables 
+      set_fact:
+        jenkins_url: "http://{{ project.private_ip }}:8080"
+        deploy_pipeline: "{{ project.name }}-deploy_pipeline"
+
+    - name: 20 - Include project properties
+      include_vars:
+        file: "{{ playbook_dir }}/workspace/vars.yml"
+
+    - name: 30 - Trigger Jenkins pipeline via shell script with inline script
+      shell: |
+        JENKINS_URL="{{ jenkins_url }}"
+        JOB_NAME="{{ deploy_pipeline }}"
+        USER="{{ project.jenkins.user }}"
+        PASSWORD="{{ project.jenkins.pass }}"
+        CRUMB_JSON=$(curl -s -u "$USER:$PASSWORD" -c cookies.txt "$JENKINS_URL/crumbIssuer/api/json")
+        CRUMB=$(echo "$CRUMB_JSON" | jq -r .crumb)
+        CRUMB_FIELD=$(echo "$CRUMB_JSON" | jq -r .crumbRequestField)
+        curl -v -X POST "$JENKINS_URL/job/$JOB_NAME/build" \
+          -u "$USER:$PASSWORD" \
+          -b cookies.txt \
+          -H "$CRUMB_FIELD: $CRUMB"
+      register: result
+
+    - name: 40 - Wait for Jenkins job to complete
+      block:
+      - name: Poll until job is done
+        uri:
+          url: "{{ jenkins_url }}/job/{{ deploy_pipeline }}/lastBuild/api/json"
+          method: GET
+          user: "{{ project.jenkins.user }}"
+          password: "{{ project.jenkins.pass }}"
+          force_basic_auth: true
+          validate_certs: false
+          return_content: true
+        register: jenkins_build
+        until: jenkins_build.json.result is defined and jenkins_build.json.result != None
+        retries: 300
+        delay: 3
+      rescue:
+        - name: 40b - fail if build did not start 
+          fail:
+            msg: "Error, could not query the jenkins job queue"
+
+    - name: 50 - Build job FAILED or ABORTED 
+      fail: 
+        msg: "Build job FAILED"
+      when: 
+        job_response|json_query('json.result') in ['FAILURE', 'ABORTED']
+    
+    - name: 60 - Build job SUCCESS
+      debug:
+        msg: "Build job SUCCESSFUL"
+      when: 
+        job_response|json_query('json.result') not in ['FAILURE', 'ABORTED']

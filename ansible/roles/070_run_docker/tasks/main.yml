@@ -1,0 +1,9 @@
+---
+
+- name: Run docker
+  block:        
+    - name: 10 -Run docker (conditionally selected services)
+      community.docker.docker_compose_v2:
+        project_src: "{{ project.project_path }}"
+        state: present
+        services: "{{ to_run | default(omit) }}"
