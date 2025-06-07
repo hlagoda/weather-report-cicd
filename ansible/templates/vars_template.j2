@@ -1,6 +1,7 @@
 project:
     name: "{{ project_params.PROJECT_NAME}}"
     private_ip: "{{ project_params.PROJECT_PRIV_IP}}"
+    project_path: "{{ project_params.PROJECT_PATH }}"
 
     jenkins:
         user: "{{ project_params.JENKINS_USER}}"
@@ -16,3 +17,5 @@ project:
         storage: "{{ project_params.AWS_STORAGE}}"
         storage_type: "{{ project_params.AWS_STORAGE_TYPE}}"
         key_name: "{{ project_params.KEY_NAME}}"
+
+    open_api: "{{ project_params.OPENWEATHER_API_KEY }}"
