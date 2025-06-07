@@ -3,31 +3,45 @@
 - name: A - Initialize application
   hosts: localhost
   any_errors_fatal: true
+  vars_files:
+    - ansible/vars/secret_vars.yml
 
   tasks:
-    - name: 30 - Print project properties file name
+
+    - name: 10 - Print project properties file name
       debug:
         msg: Project property file = {{ project_properties_file }}
 
-    - name: 40 - Include project properties
+    - name: 20 - Include project properties
       include_vars:
         file: "{{ project_properties_file }}"
         name: project_params
 
-    - name: 10 - Generate properties file
+    - name: 30 - create workspace 
+      file: 
+         path: "{{ playbook_dir }}/workspace"
+         state: directory 
+
+    - name: 40 - Generate properties file
       template:
         src: ansible/templates/vars_template.j2
         dest: "{{ playbook_dir }}/workspace/vars.yml"
 
-    - name: 20 - Include project properties
+    - name: 50 - Include project properties
       include_vars:
         file: "{{ playbook_dir }}/workspace/vars.yml"
+
+    - name: 60 - Create .env file
+      template:
+        src: ansible/templates/env.j2
+        dest: ".env"
+        mode: "0600"
     
-    - name: 30 - Print project name
+    - name: 70 - Print project name
       debug:
         msg: "Project name: {{ project.name }}"
 
-    - name: 50 - Check if jenkins is running
+    - name: 80 - Check if jenkins is running
       uri:
         url: "http://{{ project.private_ip }}:8080"
         method: GET
@@ -38,14 +52,14 @@
       register: jenkins_status
       ignore_errors: true
       
-    - name: 60 - Fail if jenkins is not running
+    - name: 90 - Fail if jenkins is not running
       fail:
         msg: Jenkins is not running
       when: jenkins_status.status != 200
         
   tags: ['app_init', 'full']
 
-- name: B - Create AWS instance + inventory
+- name: B - Create AWS instance + inventory + docker-compose
   hosts: localhost
   any_errors_fatal: true
 
@@ -63,6 +77,40 @@
         name: "010_create_aws_instance"
 
   tags: ['create_aws_instance', 'full']
+
+- name: C - Install initial components
+  hosts: aws
+  any_errors_fatal: true
+
+  tasks:
+    - name: 10 - Include project properties
+      include_vars:
+        file: "{{ playbook_dir }}/workspace/vars.yml"
+
+    - name: 20 - Install initial components
+      include_role:
+        name: "020_initial_components"
+
+  tags: ['initial_components', 'jenkins']
+
+- name: D - Configure Jenkins
+  hosts: localhost
+  any_errors_fatal: true
+
+  tasks:
+    - name: 10 - Include project properties
+      include_vars:
+        file: "{{ playbook_dir }}/workspace/vars.yml"
+
+    - name: 20 - Include secret vars
+      include_vars:
+        file: "{{ playbook_dir }}/ansible/vars/secret_vars.yml"
+
+    - name: 30 - Configure Jenkins
+      include_role:
+        name: "030_configure_jenkins"
+
+  tags: ['configure_jenkins', 'jenkins']
 
 
   

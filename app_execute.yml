@@ -1,53 +1,57 @@
 ---
 
-- name: A - Configure Jenkins
-  hosts: localhost
-  any_errors_fatal: true
-
-  tasks:
-    - name: 10 - Include project properties
-      include_vars:
-        file: "{{ playbook_dir }}/workspace/vars.yml"
-
-    - name: 20 - Include secret vars
-      include_vars:
-        file: "{{ playbook_dir }}/ansible/vars/secret_vars.yml"
-
-    - name: 30 - Run configure jenkins role
-      include_role:
-        name: "020_configure_jenkins"
-
-  tags: ['configure_jenkins', 'full']
-
-- name: B - Install components
+- name: A - Install components
   hosts: aws 
   any_errors_fatal: true
 
   tasks:
     - name: 10 - Run install components role
       include_role:
-        name: "030_install_components"
+        name: "040_install_components"
         
   tags: ['install_components', 'full']
 
-- name: C - Add files to app vm 
+- name: B - Add files to app vm 
   hosts: aws
   any_errors_fatal: true
+  vars_files:
+    - ansible/vars/secret_vars.yml
 
   tasks:
-    - name: 10 - Run add files role
+    - name: 10 - Include project properties
+      include_vars:
+        file: "{{ playbook_dir }}/workspace/vars.yml" 
+        
+    - name: 20 - Run add files role
       include_role:
-        name: "040_add_files"
+        name: "050_add_files"
 
   tags: ['add_files', 'full']
 
-- name: D - Deploy docker containers
+- name: C - Deploy docker containers
   hosts: aws
   any_errors_fatal: true
 
   tasks:
     - name: 10 - Run deploy docker role
       include_role:
-        name: "050_deploy_docker"
+        name: "060_deploy_docker"
 
   tags: ['deploy_docker', 'full']
+
+- name: D - Run docker containers
+  hosts: aws
+  any_errors_fatal: true
+  vars_files:
+    - ansible/vars/secret_vars.yml
+
+  tasks:
+    - name: 10 - Include project properties
+      include_vars:
+        file: "{{ playbook_dir }}/workspace/vars.yml"
+
+    - name: 20 - Run deploy docker role
+      include_role:
+        name: "070_run_docker"
+
+  tags: ['run_docker', 'full']
