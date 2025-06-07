@@ -57,5 +57,10 @@
     template:
       src: inventory.j2
       dest: "{{ playbook_dir }}/workspace/inventory.yml"
+
+  - name: 140 - Create Docker-Compose
+    template:
+      src: docker-compose.j2
+      dest: "{{ playbook_dir }}/docker-compose.yml"
     
   

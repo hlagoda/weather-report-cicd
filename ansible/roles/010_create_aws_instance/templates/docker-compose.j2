@@ -1,0 +1,75 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: weatherdb
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: weatherdb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db_postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:                     
+      - backend
+
+  fetch_app:
+    build: ./fetch_app
+    container_name: fetch_app
+    depends_on:
+      - db
+    environment:
+      - OPENWEATHER_API_KEY
+      - DB_HOST=db
+    networks:                      
+      - backend
+
+  flask_app:
+    build: ./flask_app
+    container_name: flask_app
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DB_HOST=db
+    networks:                      
+      - backend
+
+  report_app:
+    build: ./report_app
+    container_name: report_app
+    volumes:
+      - {{ project.project_path }}/reports:/app/output
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DB_HOST=db
+    networks:                      
+      - backend
+
+  send_report:
+    build: ./send_report
+    container_name: send_report
+    volumes:
+      - {{ project.project_path }}/reports:/app/output
+    depends_on:
+      - report_app
+    environment:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_REGION
+      - S3_BUCKET
+    networks:                      
+      - backend
+
+networks:                         
+  backend:
+    driver: bridge
