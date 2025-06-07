@@ -1,0 +1,17 @@
+---
+
+- name: Configure Jenkins
+  block:
+    - name: 10 - Include project properties
+      include_vars:
+        file: "{{ playbook_dir }}/workspace/vars.yml"
+
+    - name: 20 - set variables 
+      set_fact:
+        jenkins_location: '/var/lib/jenkins'
+
+    - name: 30 - prepare jenkins 
+      include_tasks: prepare_jenkins.yml
+
+    - name: 40 - run jobs
+      include_tasks: run_jobs.yml

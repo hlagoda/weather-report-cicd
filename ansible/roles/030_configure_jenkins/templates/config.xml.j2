@@ -1,0 +1,25 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job">
+  <actions/>
+  <description>Pipeline z lokalnego pliku Jenkinsfile</description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  {% if pipeline_name == "fetch_data" %}
+  <triggers>
+    <hudson.triggers.TimerTrigger>
+      <spec>H * * * *</spec>
+    </hudson.triggers.TimerTrigger>
+  </triggers>
+  {% endif %}
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps">
+    <script>
+      node { 
+        def pipeline = load '{{ jenkins_location }}/workspace/{{ project.name }}-{{ pipeline_name }}/jenkins/{{ pipeline_name }}.groovy'
+        pipeline.deploy()
+      }
+    </script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>
