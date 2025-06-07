@@ -12,8 +12,7 @@ def upload_to_s3(pdf_path, bucket, key):
     s3.upload_file(pdf_path, bucket, key)
     print(f"Uploaded {pdf_path} to s3://{bucket}/{key}")
 
-# Find the latest PDF file in the output directory
-OUTPUT_DIR = "/app/output"
+OUTPUT_DIR = '/app/output'
 list_of_files = glob.glob(f"{OUTPUT_DIR}/*.pdf")
 if not list_of_files:
     print("No PDF files found in the output directory.")
